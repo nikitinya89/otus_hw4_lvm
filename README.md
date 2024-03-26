@@ -328,7 +328,7 @@ Writing superblocks and filesystem accounting information: done
 ![lsblk_var_mirror](lsblk_var_mirror.jpg)
 > В /etc/fstab добавлена запись для монтирования /var
 
-![fstab_var](fstab_var.jpg)
+![fstab-var](fstab-var.jpg)
 ### Выделить том под /home
 ```
 [root@lvm ~]# lvremove /dev/vg_root/lv_root
@@ -364,4 +364,26 @@ realtime =none                   extsz=4096   blocks=0, rtextents=0
 [root@lvm ~]# umount /mnt/
 [root@lvm ~]# mount /dev/vg_home/lv_home /home
 [root@lvm ~]# echo "`blkid | grep home| awk '{print$2}'` /home xfs defaults 0 0" >> /etc/fstab
+```
+![lsblk_home](lsblk_home.jpg)
+> В /etc/fstab добавлена запись для монтирования /home
+
+![fstab_home](fstab_home.jpg)
+### Для /home - сделать том для снэпшотов
+```
+[root@lvm ~]# touch /home/file{1..20}
+[root@lvm ~]# ls /home
+file1  file10  file11  file12  file13  file14  file15  file16  file17  file18  file19  file2  file20  file3  file4  file5  file6  file7  file8  file9  vagrant
+[root@lvm ~]# lvcreate -n snap_home -L 1G -s /dev/vg_home/lv_home
+  Logical volume "snap_home" created.
+[root@lvm ~]# rm -f /home/file{10..20}
+[root@lvm ~]# ls /home/
+file1  file2  file3  file4  file5  file6  file7  file8  file9  vagrant
+[root@lvm ~]# umount /home/
+[root@lvm ~]# lvconvert --merge /dev/vg_home/snap_home
+  Merging of volume vg_home/snap_home started.
+  vg_home/lv_home: Merged: 100.00%
+[root@lvm ~]# mount /home
+[root@lvm ~]# ls /home
+file1  file10  file11  file12  file13  file14  file15  file16  file17  file18  file19  file2  file20  file3  file4  file5  file6  file7  file8  file9  vagrant
 ```
